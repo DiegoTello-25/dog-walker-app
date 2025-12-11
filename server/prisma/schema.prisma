@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Sibling {
+  id        Int      @id @default(autoincrement())
+  name      String
+  order     Int      @default(0)
+  avatarUrl String?
+  walks     Walk[]
+  turns     Turn[]
+  createdAt DateTime @default(now())
+}
+
+model Turn {
+  id        Int      @id @default(autoincrement())
+  sibling   Sibling  @relation(fields: [siblingId], references: [id])
+  siblingId Int
+  status    String   @default("CURRENT") // CURRENT, COMPLETED, SKIPPED
+  createdAt DateTime @default(now())
+}
+
+model Walk {
+  id                 Int      @id @default(autoincrement())
+  sibling            Sibling  @relation(fields: [siblingId], references: [id])
+  siblingId          Int
+  timestamp          DateTime @default(now())
+  photoPath          String
+  verificationStatus String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  confidenceScore    Float?
+}
