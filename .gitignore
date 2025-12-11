@@ -33,7 +33,11 @@ Thumbs.db
 .firebase/
 firebase-debug.log
 firestore-debug.log
+client/src/firebase.ts
 
 # Misc
 *.log
 .cache/
+
+# Firebase config (contains API keys)
+client/src/firebase.ts
