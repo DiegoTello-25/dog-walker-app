@@ -46,7 +46,7 @@ function AppContent() {
     <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          🐕 Paseos de Luna
+          Paseos de Luna
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {user.photoURL && <img src={user.photoURL} style={{ width: '32px', height: '32px', borderRadius: '50%' }} />}
