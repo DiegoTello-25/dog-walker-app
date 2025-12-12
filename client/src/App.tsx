@@ -27,6 +27,8 @@ function AppContent() {
     return () => document.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+
+
   if (loading) return <div className="text-center p-10">Cargando...</div>;
 
   if (!user) {
@@ -49,6 +51,7 @@ function AppContent() {
           Paseos de Luna
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+
           {user.photoURL && <img src={user.photoURL} style={{ width: '32px', height: '32px', borderRadius: '50%' }} />}
           <button onClick={logout} className="btn-secondary" style={{ padding: '8px', borderRadius: '50%' }}><LogOut size={16} /></button>
         </div>

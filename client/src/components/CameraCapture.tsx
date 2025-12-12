@@ -3,7 +3,7 @@ import { Camera, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { storage, db } from '../firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { collection, addDoc, doc, setDoc, serverTimestamp, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, addDoc, doc, setDoc, serverTimestamp, getDocs, query, orderBy, getDoc, increment } from 'firebase/firestore';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import '@tensorflow/tfjs';
 
@@ -73,7 +73,7 @@ export function CameraCapture({ user, onUploadComplete }: Props) {
 
             if (!isVerified) {
                 toast.dismiss(loadingToast);
-                const override = confirm("🐶 No se detectó perro. ¿Subir igual?");
+                const override = confirm("No se detectó perro. ¿Subir igual?");
                 if (!override) {
                     setUploading(false);
                     return;
@@ -111,24 +111,53 @@ export function CameraCapture({ user, onUploadComplete }: Props) {
                 return;
             }
 
-            // 4. Update Turn (Simple Rotation Logic)
+            // 4. Update Turn (Fair Rotation Logic)
             if (isVerified) {
                 try {
                     // Fetch all siblings to find the next one
                     const siblingsSnap = await getDocs(query(collection(db, "siblings"), orderBy("createdAt", "asc")));
                     const siblings = siblingsSnap.docs.map(d => ({ uid: d.id, ...d.data() } as any));
 
+                    // Fetch Current Turn to check for Original Owner (Replacement scenario)
+                    const turnRef = doc(db, "turns", "current_turn");
+                    const turnSnap = await getDoc(turnRef);
+                    const currentTurnData = turnSnap.exists() ? turnSnap.data() : null;
+
+                    const originalUid = currentTurnData?.originalSiblingUid;
+
                     if (siblings.length > 0) {
-                        const currentIndex = siblings.findIndex(s => s.uid === user.uid);
-                        // If user not found (currentIndex -1), default to 0
+                        // Determine who owns the CURRENT slot in the schedule
+                        // If replacement active: originalUid
+                        // If normal: user.uid
+                        const currentSlotOwnerUid = originalUid || user.uid;
+
+                        // Balance Updates (if replacement happened)
+                        if (originalUid && originalUid !== user.uid) {
+                            // Walker gets +1 (Credit)
+                            await setDoc(doc(db, "siblings", user.uid), {
+                                balance: increment(1)
+                            }, { merge: true });
+
+                            // Original gets -1 (Debt)
+                            await setDoc(doc(db, "siblings", originalUid), {
+                                balance: increment(-1)
+                            }, { merge: true });
+
+                            toast.success("Balance actualizado: +1 Tú, -1 Original", { id: loadingToast });
+                        }
+
+                        // Calculate Next Turn
+                        const currentIndex = siblings.findIndex(s => s.uid === currentSlotOwnerUid);
                         const nextIndex = (currentIndex + 1) % siblings.length;
                         const nextSibling = siblings[nextIndex];
 
-                        // Use setDoc with merge to create if missing
-                        await setDoc(doc(db, "turns", "current_turn"), {
+                        // Set Next Turn (Clear replacement flags)
+                        await setDoc(turnRef, {
                             siblingUid: nextSibling.uid,
                             siblingName: nextSibling.name,
                             lastWalker: safeName,
+                            originalSiblingUid: null, // Reset
+                            originalSiblingName: null, // Reset
                             status: 'WAITING',
                             updatedAt: serverTimestamp()
                         }, { merge: true });

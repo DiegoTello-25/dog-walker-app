@@ -1,6 +1,6 @@
 # 🐕 Paseos de Luna
 
-App para gestionar turnos de paseo del perro entre hermanos.
+App para gestionar turnos de paseo del perro entre usuarios.
 
 ## Features
 
@@ -31,7 +31,3 @@ npm run dev
 npm run build
 npx firebase deploy --only hosting
 ```
-
-## Live
-
-https://dogwalker-b090e.web.app
